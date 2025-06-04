@@ -1,0 +1,347 @@
+stop and wait protocol week-3
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h> // For sleep() function (Linux/Unix)
+#include <time.h>   // For time() to seed the random number generator
+
+int main() {
+    int i = 1, noframes, ack;
+
+    srand(time(NULL)); // Seed the random number generator once
+
+    noframes = (rand() % 10) + 1;  // Generate a random number for frames (1 to 10)
+    printf("Number of frames is %d\n", noframes);
+
+    while (i <= noframes) {
+        printf("\nSending frame %d", i);
+
+        ack = rand() % 10; // Simulate ACK loss or reception
+
+        if (ack % 2 == 0) {  // Simulate lost ACK
+            printf(" - No ACK received, resending frame %d\n", i);
+            sleep(1);  // Wait for 1 second before resending
+            printf("Resending frame %d\n", i);
+        }
+
+        // Assume ACK received after resend
+        printf("ACK for frame %d received\n", i);
+        i++;  // Move to next frame
+    }
+
+    printf("\nEnd of Stop-and-Wait protocol\n");
+
+    return 0;
+}
+
+============================================================
+week-4 sliding window
+
+#include <stdio.h>
+
+int main() {
+    int w, i, f, frames[50];
+
+    // Get the sliding window size
+    printf("Enter window size: ");
+    scanf("%d", &w);
+
+    // Get the number of frames to transmit
+    printf("Enter number of frames to transmit: ");
+    scanf("%d", &f);
+
+    // Get the frame values
+    printf("Enter %d frames: ", f);
+    for (i = 0; i < f; i++) {
+        scanf("%d", &frames[i]);
+    }
+
+    // Sliding Window Protocol output
+    printf("\nWith sliding window protocol, the frames will be sent in the following manner (assuming no corruption of frames)\n\n");
+    printf("After sending %d frames at each stage, sender waits for acknowledgement sent by the receiver\n\n", w);
+
+    for (i = 0; i < f; i++) {
+        // Print the frame
+        printf("%d ", frames[i]);
+
+        // Check if we’ve sent 'w' frames, or it’s the last frame
+        if ((i + 1) % w == 0) {
+            printf("\nAcknowledgement of above frames sent is received by sender\n\n");
+        }
+    }
+
+    // If total frames are not divisible by window size, print final ACK
+    if (f % w != 0) {
+        printf("\nAcknowledgement of above frames sent is received by sender\n");
+    }
+
+    return 0;
+}
+=============================================
+
+week-1 bit stuffing
+
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char input[100], output[200];
+    int i, j = 0, count = 0;
+
+    printf("Enter the binary string (0s and 1s): ");
+    scanf("%s", input);
+
+    // Add starting flag
+    strcpy(output, "01111110");
+    j = strlen(output);
+
+    // Bit stuffing: add a '0' after 5 consecutive 1s
+    for (i = 0; i < strlen(input); i++) {
+        output[j++] = input[i];
+
+        if (input[i] == '1') {
+            count++;
+            if (count == 5) {
+                output[j++] = '0';
+                count = 0;
+            }
+        } else {
+            count = 0;
+        }
+    }
+
+    // Add ending flag
+    strcat(output, "01111110");
+
+    printf("Stuffed Bit String: %s\n", output);
+
+    return 0;
+}
+
+===================================================
+week-1 character stuffing
+
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char a[100], b[300];
+    int i, j = 0;
+
+    printf("Enter the data: ");
+    fgets(a, sizeof(a), stdin);
+    if (a[strlen(a) - 1] == '\n') a[strlen(a) - 1] = '\0';
+
+    // Add starting flag '/*$'
+    b[j++] = '/'; b[j++] = '*'; b[j++] = '$';
+
+    for (i = 0; i < strlen(a); i++) {
+        // Check if the next 3 chars are "/*$"
+        if (a[i] == '/' && a[i+1] == '*' && a[i+2] == '$') {
+            // Stuff "/*$x" to escape
+            b[j++] = '/'; b[j++] = '*'; b[j++] = '$'; b[j++] = 'x';
+            i += 2;  // Skip the next two chars '*', '$'
+        } else {
+            b[j++] = a[i];
+        }
+    }
+
+    // Add ending flag '/*$'
+    b[j++] = '/'; b[j++] = '*'; b[j++] = '$';
+    b[j] = '\0';
+
+    printf("Stuffed frame: %s\n", b);
+    return 0;
+}
+
+================================================================================
+ Super-Simplified Dijkstra's Algorithm in C: week-5
+ 
+#include <stdio.h>
+
+int main() {
+    int graph[10][10], dist[10], visited[10];
+    int V, E, src, u, v, w;
+
+    printf("Enter number of vertices (max 10): ");
+    scanf("%d", &V);
+
+    // Initialize graph
+    for (int i = 0; i < V; i++)
+        for (int j = 0; j < V; j++)
+            graph[i][j] = 0;
+
+    printf("Enter number of edges: ");
+    scanf("%d", &E);
+
+    printf("Enter edges (from to weight):\n");
+    for (int i = 0; i < E; i++) {
+        scanf("%d %d %d", &u, &v, &w);
+        graph[u][v] = w;
+    }
+
+    printf("Enter source vertex: ");
+    scanf("%d", &src);
+
+    // Initialize distances and visited
+    for (int i = 0; i < V; i++) {
+        dist[i] = 9999; // Infinity
+        visited[i] = 0;
+    }
+    dist[src] = 0;
+
+    // Dijkstra's algorithm
+    for (int count = 0; count < V - 1; count++) {
+        int min = 9999, u = -1;
+        for (int i = 0; i < V; i++)
+            if (!visited[i] && dist[i] < min)
+                min = dist[i], u = i;
+
+        if (u == -1) break;
+        visited[u] = 1;
+
+        for (int v = 0; v < V; v++)
+            if (graph[u][v] && !visited[v] && dist[u] + graph[u][v] < dist[v])
+                dist[v] = dist[u] + graph[u][v];
+    }
+
+    // Output
+    printf("\nShortest distances from vertex %d:\n", src);
+    for (int i = 0; i < V; i++)
+        printf("To %d -> %d\n", i, dist[i]);
+
+    return 0;
+}
+
+==============================================================
+week 2 crc
+
+#include <stdio.h>
+#include <string.h>
+
+char data[100], gen_poly[20], check_value[30];
+int data_len, gen_len;
+
+void XOR() {
+    for (int i = 1; i < gen_len; i++)
+        check_value[i] = (check_value[i] == gen_poly[i]) ? '0' : '1';
+}
+
+void computeCRC() {
+    for (int i = 0; i < gen_len; i++)
+        check_value[i] = data[i];
+
+    int i = gen_len;
+    do {
+        if (check_value[0] == '1') XOR();
+        for (int j = 0; j < gen_len - 1; j++)
+            check_value[j] = check_value[j + 1];
+        check_value[gen_len - 1] = data[i++];
+    } while (i <= data_len + gen_len - 1);
+}
+
+void receiver() {
+    char recv[100];
+    printf("\nEnter the received data: ");
+    scanf("%s", recv);
+    strcpy(data, recv);
+    computeCRC();
+
+    for (int i = 0; i < gen_len - 1 && check_value[i] != '1'; i++);
+    if (check_value[0] == '1' || strchr(check_value, '1'))
+        printf("Error detected\n");
+    else
+        printf("No error detected\n");
+}
+
+int main() {
+    printf("Enter data to be transmitted: ");
+    scanf("%s", data);
+    printf("Enter the generating polynomial: ");
+    scanf("%s", gen_poly);
+
+    data_len = strlen(data);
+    gen_len = strlen(gen_poly);
+
+    // Append n-1 zeros to data
+    for (int i = data_len; i < data_len + gen_len - 1; i++)
+        data[i] = '0';
+    data[data_len + gen_len - 1] = '\0';
+
+    printf("\nData padded with %d zeros: %s", gen_len - 1, data);
+
+    computeCRC();
+
+    printf("\nCRC (check value): %s", check_value);
+
+    // Append CRC to original data
+    for (int i = data_len; i < data_len + gen_len - 1; i++)
+        data[i] = check_value[i - data_len];
+    data[data_len + gen_len - 1] = '\0';
+
+    printf("\nFinal data to send: %s\n", data);
+
+    receiver();
+
+    return 0;
+}
+
+===============================================================
+week - 6
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct TreeNode {
+    int id, count;
+    struct TreeNode* children[10];
+} TreeNode;
+
+TreeNode* createNode(int id) {
+    TreeNode* node = malloc(sizeof(TreeNode));
+    node->id = id;
+    node->count = 0;
+    for (int i = 0; i < 10; i++)
+        node->children[i] = NULL;
+    return node;
+}
+
+void addChild(TreeNode* parent, TreeNode* child) {
+    if (parent->count < 10)
+        parent->children[parent->count++] = child;
+}
+
+void printTree(TreeNode* root, int level) {
+    if (!root) return;
+    for (int i = 0; i < level; i++) printf("  ");
+    printf("Host %d\n", root->id);
+    for (int i = 0; i < root->count; i++)
+        printTree(root->children[i], level + 1);
+}
+
+void freeTree(TreeNode* root) {
+    if (!root) return;
+    for (int i = 0; i < root->count; i++)
+        freeTree(root->children[i]);
+    free(root);
+}
+
+int main() {
+    TreeNode* root = createNode(0);
+    TreeNode *h1 = createNode(1), *h2 = createNode(2);
+    TreeNode *h3 = createNode(3), *h4 = createNode(4), *h5 = createNode(5), *h6 = createNode(6);
+
+    addChild(root, h1); addChild(root, h2);
+    addChild(h1, h3); addChild(h1, h4);
+    addChild(h2, h5);
+    addChild(h3, h6);
+
+    printf("Broadcast Tree:\n");
+    printTree(root, 0);
+
+    freeTree(root);
+    return 0;
+}
+
+
+
